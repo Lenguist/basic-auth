@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabaseBrowserClient'
 
 export default function DashboardPage() {
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -33,7 +34,7 @@ export default function DashboardPage() {
   if (!session) return null
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-zinc-900">
+    <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center">
       <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
         Hello, {session.user.email} 👋
       </h1>
@@ -42,15 +43,17 @@ export default function DashboardPage() {
         Welcome to your dashboard. Only logged-in users can see this page.
       </p>
 
-      <button
-        onClick={async () => {
-          await supabaseBrowser.auth.signOut()
-          router.push('/auth')
-        }}
-        className="rounded-lg bg-black px-5 py-2 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-      >
-        Sign Out
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={async () => {
+            await supabaseBrowser.auth.signOut()
+            router.push('/auth')
+          }}
+          className="rounded-lg bg-black px-5 py-2 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+        >
+          Sign Out
+        </button>
+      </div>
     </div>
   )
 }

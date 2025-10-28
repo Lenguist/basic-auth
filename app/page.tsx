@@ -1,45 +1,28 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabaseBrowser } from '@/lib/supabaseBrowserClient'
+import Link from 'next/link'
 
 export default function HomePage() {
-  const [session, setSession] = useState<any>(null)
-  const router = useRouter()
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabaseBrowser.auth.getSession()
-      if (!data.session) router.push('/auth')
-      else setSession(data.session)
-    }
-    checkSession()
-  }, [router])
-
-  async function handleLogout() {
-    await supabaseBrowser.auth.signOut()
-    router.push('/auth')
-  }
-
-  if (!session)
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-zinc-900">
-        <p className="text-gray-700 dark:text-gray-200">Loading...</p>
-      </div>
-    )
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-zinc-900">
-      <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
-        Welcome, {session.user.email}
-      </h1>
-      <button
-        onClick={handleLogout}
-        className="rounded-lg bg-black px-5 py-2 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-      >
-        Sign Out
-      </button>
+    <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center">
+      <h1 className="mb-3 text-4xl font-bold text-gray-900 dark:text-white">Welcome</h1>
+      <p className="mb-8 max-w-lg text-center text-gray-700 dark:text-gray-300">
+        This is a public home page for a minimal Supabase + Next.js auth starter.
+      </p>
+      <div className="flex items-center gap-3">
+        <Link
+          href="/dashboard"
+          className="rounded-lg bg-black px-5 py-2 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+        >
+          Go to Dashboard
+        </Link>
+        <Link
+          href="/auth"
+          className="rounded-lg border border-gray-300 px-5 py-2 text-gray-800 hover:bg-gray-100 dark:border-gray-700 dark:text-white dark:hover:bg-zinc-800"
+        >
+          Sign In
+        </Link>
+      </div>
     </div>
   )
 }
