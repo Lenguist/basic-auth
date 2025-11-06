@@ -48,6 +48,18 @@ export default function NavBar() {
           ) : (
             <div className="flex items-center gap-2">
               <Link
+                href="/search"
+                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-zinc-800"
+              >
+                Search
+              </Link>
+              <Link
+                href="/library"
+                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-zinc-800"
+              >
+                Library
+              </Link>
+              <Link
                 href="/dashboard"
                 className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-zinc-800"
               >
