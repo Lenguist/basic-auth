@@ -12,7 +12,7 @@ export default function HomePage() {
           Track your reading. <span className="text-orange-600">Find great papers.</span>
         </h1>
         <p className="mb-8 max-w-2xl text-lg text-gray-700 dark:text-gray-300">
-          Papertrail lets you search research, save to your library, and keep momentum—like Strava for reading.
+          Papertrail lets you search research, save to your library, and keep momentum with a progress‑oriented reading experience.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link href="/search" className="btn-primary px-6 py-3">
