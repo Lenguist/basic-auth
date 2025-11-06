@@ -22,5 +22,16 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Brand helpers */
+.btn-primary {
+  @apply rounded-lg bg-orange-600 text-white transition hover:bg-orange-700 disabled:opacity-50;
+}
+.btn-secondary {
+  @apply rounded-lg border border-orange-600 text-orange-700 hover:bg-orange-50 dark:text-orange-300 dark:border-orange-400 dark:hover:bg-orange-950/20;
+}
+.chip {
+  @apply inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-300;
 }

@@ -4,25 +4,25 @@ import Link from 'next/link'
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center">
-      <h1 className="mb-3 text-4xl font-bold text-gray-900 dark:text-white">Welcome</h1>
-      <p className="mb-8 max-w-lg text-center text-gray-700 dark:text-gray-300">
-        This is a public home page for a minimal Supabase + Next.js auth starter.
-      </p>
-      <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard"
-          className="rounded-lg bg-black px-5 py-2 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-        >
-          Go to Dashboard
-        </Link>
-        <Link
-          href="/auth"
-          className="rounded-lg border border-gray-300 px-5 py-2 text-gray-800 hover:bg-gray-100 dark:border-gray-700 dark:text-white dark:hover:bg-zinc-800"
-        >
-          Sign In
-        </Link>
-      </div>
+    <div className="relative isolate">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-orange-100 via-white to-white dark:from-orange-900/20 dark:via-zinc-950 dark:to-zinc-950" />
+      <section className="mx-auto flex min-h-[60vh] w-full max-w-5xl flex-col items-center justify-center px-4 text-center">
+        <span className="chip mb-3">New</span>
+        <h1 className="mb-4 text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+          Track your reading. <span className="text-orange-600">Find great papers.</span>
+        </h1>
+        <p className="mb-8 max-w-2xl text-lg text-gray-700 dark:text-gray-300">
+          Papertrail lets you search research, save to your library, and keep momentum—like Strava for reading.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link href="/search" className="btn-primary px-6 py-3">
+            Search Papers
+          </Link>
+          <Link href="/auth" className="btn-secondary px-6 py-3">
+            Sign In
+          </Link>
+        </div>
+      </section>
     </div>
   )
 }

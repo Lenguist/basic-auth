@@ -32,16 +32,17 @@ export default function NavBar() {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/70 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/70">
+    <header className="sticky top-0 z-20 border-b-2 border-orange-500/80 bg-white/80 backdrop-blur dark:bg-zinc-950/80">
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
-        <Link href="/" className="font-semibold text-gray-900 transition hover:opacity-80 dark:text-white">
-          BasicAuth
+        <Link href="/" className="flex items-center gap-2 font-semibold text-gray-900 transition hover:opacity-80 dark:text-white">
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-[4px] bg-orange-600 text-white">P</span>
+          <span>Papertrail</span>
         </Link>
         <nav className="flex items-center gap-3">
           {!session ? (
             <Link
               href="/auth"
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-800 hover:bg-gray-100 dark:border-gray-700 dark:text-white dark:hover:bg-zinc-800"
+              className="btn-secondary px-3 py-1.5 text-sm"
             >
               Sign In
             </Link>
@@ -49,25 +50,25 @@ export default function NavBar() {
             <div className="flex items-center gap-2">
               <Link
                 href="/search"
-                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-zinc-800"
+                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-orange-50 dark:text-white dark:hover:bg-orange-900/20"
               >
                 Search
               </Link>
               <Link
                 href="/library"
-                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-zinc-800"
+                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-orange-50 dark:text-white dark:hover:bg-orange-900/20"
               >
                 Library
               </Link>
               <Link
                 href="/dashboard"
-                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-zinc-800"
+                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-orange-50 dark:text-white dark:hover:bg-orange-900/20"
               >
                 Dashboard
               </Link>
               <button
                 onClick={handleSignOut}
-                className="rounded-lg bg-black px-3 py-1.5 text-sm text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                className="btn-primary px-3 py-1.5 text-sm"
               >
                 Sign Out
               </button>

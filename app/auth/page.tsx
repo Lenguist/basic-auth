@@ -105,7 +105,7 @@ export default function AuthPage() {
             <button
               onClick={handleSendMagicLink}
               disabled={loading || !email}
-              className="w-full rounded-full bg-black px-4 py-3 text-white transition hover:bg-gray-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+              className="w-full btn-primary rounded-full px-4 py-3"
             >
               {loading ? 'Sending…' : 'Send magic link'}
             </button>
@@ -127,12 +127,12 @@ export default function AuthPage() {
               placeholder="Enter code"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 tracking-widest text-gray-900 focus:border-black focus:outline-none dark:border-gray-700 dark:bg-zinc-800 dark:text-white"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 tracking-widest text-gray-900 focus:border-orange-600 focus:outline-none dark:border-gray-700 dark:bg-zinc-800 dark:text-white"
             />
             <button
               onClick={handleVerifyCode}
               disabled={loading || code.length < 6}
-              className="w-full rounded-lg bg-black px-4 py-2 text-white transition hover:bg-gray-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+              className="w-full btn-primary px-4 py-2"
             >
               {loading ? 'Verifying…' : 'Verify Code'}
             </button>

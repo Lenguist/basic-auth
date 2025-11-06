@@ -95,12 +95,12 @@ export default function SearchPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search OpenAlex..."
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-black focus:outline-none dark:border-gray-700 dark:bg-zinc-800 dark:text-white"
+          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:outline-none dark:border-gray-700 dark:bg-zinc-800 dark:text-white"
         />
         <button
           onClick={search}
           disabled={!canSearch || loading}
-          className="rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+          className="btn-primary px-4 py-2"
         >
           {loading ? 'Searching…' : 'Search'}
         </button>
@@ -132,7 +132,7 @@ export default function SearchPage() {
                 <button
                   onClick={() => handleAdd(w)}
                   disabled={!!added || adding === w.id}
-                  className="rounded bg-black px-3 py-1.5 text-sm text-white hover:bg-gray-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+                  className="btn-primary px-3 py-1.5 text-sm"
                 >
                   {added ? 'Added' : adding === w.id ? 'Adding…' : 'Add to Library'}
                 </button>
