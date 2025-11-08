@@ -1,3 +1,14 @@
+add chat with Human Knowledge Base
+
+add chat with my knowlegd base
+
+semantic search for your own papers and for all papers
+
+add really good recommendation engine and set up "notifications" if a specific paper comes out or specific idea appears smwh
+
+Find people to dogfood this too
+
+
 Maksym Bondarenko, [11/5/25 7:02 PM]
 Search for paper add to the library review
 
