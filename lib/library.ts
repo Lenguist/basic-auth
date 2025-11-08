@@ -44,6 +44,15 @@ export async function addPaperToLibrary(paper: NormalizedPaper) {
     throw linkRes.error
   }
 
+  // Write a feed post for activity
+  await supabaseBrowser.from('posts').insert([
+    {
+      user_id: session.user.id,
+      type: 'added_to_library',
+      openalex_id: paper.openalex_id,
+    },
+  ])
+
   return { ok: true }
 }
 

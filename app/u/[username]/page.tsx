@@ -10,6 +10,7 @@ import FollowButton from '@/components/FollowButton'
 type LibraryItem = {
   openalex_id: string
   inserted_at: string
+  status?: 'to_read' | 'reading' | 'read'
   papers: {
     openalex_id: string
     title: string
@@ -30,6 +31,9 @@ export default function PublicProfilePage() {
   const [counts, setCounts] = useState<{ followers: number; following: number } | null>(null)
   const [items, setItems] = useState<LibraryItem[]>([])
   const [statusFilter, setStatusFilter] = useState<'all' | 'to_read' | 'reading' | 'read'>('all')
+  const [tab, setTab] = useState<'library' | 'followers' | 'following'>('library')
+  const [followers, setFollowers] = useState<any[]>([])
+  const [following, setFollowing] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -48,11 +52,24 @@ export default function PublicProfilePage() {
       // initial library load
       const base = supabaseBrowser
         .from('user_papers')
-        .select('openalex_id, inserted_at, papers(*)')
+        .select('openalex_id, inserted_at, status, papers(*)')
         .eq('user_id', p.id)
         .order('inserted_at', { ascending: false })
       const res = await base
       if (!res.error) setItems((res.data as any) ?? [])
+      // load follower/following lists with joined profiles
+      const [folRes, ingRes] = await Promise.all([
+        supabaseBrowser
+          .from('follows')
+          .select('follower_id, profiles:follower_id (username, display_name, id)')
+          .eq('following_id', p.id),
+        supabaseBrowser
+          .from('follows')
+          .select('following_id, profiles:following_id (username, display_name, id)')
+          .eq('follower_id', p.id),
+      ])
+      if (!folRes.error) setFollowers(folRes.data as any)
+      if (!ingRes.error) setFollowing(ingRes.data as any)
       setLoading(false)
     }
     if (usernameParam) init()
@@ -95,6 +112,19 @@ export default function PublicProfilePage() {
         {!isMe && <FollowButton targetUserId={profile.id} />}
       </div>
 
+      <div className="mb-4 flex items-center gap-2">
+        {(['library', 'followers', 'following'] as const).map((t) => (
+          <button
+            key={t}
+            className={`px-3 py-1.5 text-sm rounded ${tab === t ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setTab(t)}
+          >
+            {t[0].toUpperCase() + t.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'library' && (
       <div className="mb-3 flex items-center gap-2">
         <button
           className={`px-3 py-1.5 text-sm rounded ${statusFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
@@ -121,8 +151,9 @@ export default function PublicProfilePage() {
           Read
         </button>
       </div>
+      )}
 
-      {filtered.length === 0 ? (
+      {tab === 'library' && (filtered.length === 0 ? (
         <p className="text-gray-700 dark:text-gray-300">No items yet.</p>
       ) : (
         <ul className="space-y-3">
@@ -148,6 +179,40 @@ export default function PublicProfilePage() {
               </li>
             )
           })}
+        </ul>
+      ))}
+
+      {tab === 'followers' && (
+        <ul className="space-y-2">
+          {followers.map((f: any) => (
+            <li key={f.follower_id} className="flex items-center justify-between rounded border border-gray-200 p-2 dark:border-zinc-800">
+              <div>
+                <a href={`/u/${f.profiles?.username ?? ''}`} className="font-medium hover:underline">
+                  {f.profiles?.display_name ?? f.profiles?.username ?? f.follower_id}
+                </a>
+                {f.profiles?.username && (
+                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">@{f.profiles.username}</span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {tab === 'following' && (
+        <ul className="space-y-2">
+          {following.map((f: any) => (
+            <li key={f.following_id} className="flex items-center justify-between rounded border border-gray-200 p-2 dark:border-zinc-800">
+              <div>
+                <a href={`/u/${f.profiles?.username ?? ''}`} className="font-medium hover:underline">
+                  {f.profiles?.display_name ?? f.profiles?.username ?? f.following_id}
+                </a>
+                {f.profiles?.username && (
+                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">@{f.profiles.username}</span>
+                )}
+              </div>
+            </li>
+          ))}
         </ul>
       )}
     </div>

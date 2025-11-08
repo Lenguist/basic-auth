@@ -67,6 +67,12 @@ export default function NavBar() {
                 Library
               </Link>
               <Link
+                href="/feed"
+                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-orange-50 dark:text-white dark:hover:bg-orange-900/20"
+              >
+                Feed
+              </Link>
+              <Link
                 href="/dashboard"
                 className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-orange-50 dark:text-white dark:hover:bg-orange-900/20"
               >

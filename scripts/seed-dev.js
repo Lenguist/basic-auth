@@ -27,6 +27,8 @@ const samplePapers = [
   { openalex_id: 'W2741809807', title: 'Attention Is All You Need', authors_json: ['Ashish Vaswani', 'Noam Shazeer'], year: 2017, url: 'https://arxiv.org/abs/1706.03762', source: 'arXiv' },
   { openalex_id: 'W1999700147', title: 'ImageNet Classification with Deep Convolutional Neural Networks', authors_json: ['Alex Krizhevsky', 'Ilya Sutskever'], year: 2012, url: 'https://dl.acm.org/doi/10.1145/3065386', source: 'ACM' },
   { openalex_id: 'W3044976299', title: 'BERT: Pre-training of Deep Bidirectional Transformers', authors_json: ['Jacob Devlin'], year: 2018, url: 'https://arxiv.org/abs/1810.04805', source: 'arXiv' },
+  { openalex_id: 'W4281986121', title: 'GPT-3: Language Models are Few-Shot Learners', authors_json: ['Tom B. Brown'], year: 2020, url: 'https://arxiv.org/abs/2005.14165', source: 'arXiv' },
+  { openalex_id: 'W2149351940', title: 'ResNet: Deep Residual Learning for Image Recognition', authors_json: ['Kaiming He'], year: 2015, url: 'https://arxiv.org/abs/1512.03385', source: 'arXiv' },
 ]
 
 async function getOrCreateUser(email) {
@@ -86,24 +88,39 @@ async function seed() {
   if (paperRes.error) throw paperRes.error
 
   console.log('Assigning papers to users...')
-  const userPapers = [
-    { user_id: users.alice.id, openalex_id: samplePapers[0].openalex_id, status: 'to_read' },
-    { user_id: users.bob.id, openalex_id: samplePapers[1].openalex_id, status: 'reading' },
-    { user_id: users.charlie.id, openalex_id: samplePapers[2].openalex_id, status: 'read' },
-    { user_id: users.david.id, openalex_id: samplePapers[0].openalex_id, status: 'to_read' },
-    { user_id: users.elaine.id, openalex_id: samplePapers[1].openalex_id, status: 'read' },
-  ]
+  function pick(n) {
+    const arr = [...samplePapers]
+    const out = []
+    while (n-- && arr.length) {
+      const idx = Math.floor(Math.random() * arr.length)
+      out.push(arr.splice(idx, 1)[0])
+    }
+    return out
+  }
+
+  const userPapers = []
+  for (const username of Object.keys(users)) {
+    const picks = pick(3)
+    for (let i = 0; i < picks.length; i++) {
+      const st = i === 0 ? 'to_read' : i === 1 ? 'reading' : 'read'
+      userPapers.push({
+        user_id: users[username].id,
+        openalex_id: picks[i].openalex_id,
+        status: st,
+      })
+    }
+  }
   for (const up of userPapers) {
     const r = await admin.from('user_papers').insert([up])
     if (r.error && r.error.code !== '23505') throw r.error
   }
 
   console.log('Inserting posts for activity feed...')
-  const posts = [
-    { user_id: users.alice.id, type: 'added_to_library', openalex_id: samplePapers[0].openalex_id },
-    { user_id: users.bob.id, type: 'status_changed', openalex_id: samplePapers[1].openalex_id, status: 'reading' },
-    { user_id: users.charlie.id, type: 'status_changed', openalex_id: samplePapers[2].openalex_id, status: 'read' },
-  ]
+  const posts = []
+  for (const up of userPapers) {
+    posts.push({ user_id: up.user_id, type: 'added_to_library', openalex_id: up.openalex_id })
+    posts.push({ user_id: up.user_id, type: 'status_changed', openalex_id: up.openalex_id, status: up.status })
+  }
   const postRes = await admin.from('posts').insert(posts)
   if (postRes.error) throw postRes.error
 
