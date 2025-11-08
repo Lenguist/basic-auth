@@ -1,3 +1,11 @@
+Nov 8
+
+to add demo users on dev
+cd /Users/mbondarenko/Desktop/papertrail-main
+export SUPABASE_URL="https://<DEV_REF>.supabase.co"
+export SUPABASE_SERVICE_ROLE_KEY="sb_secret_..."
+npm run seed:dev
+
 Nov 6th update
 Got basic node js frontned only version to work. Will rewordk my environment and set up before furhter iteration.
 Rename branch
