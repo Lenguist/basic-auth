@@ -35,25 +35,27 @@ async function getOrCreateUser(email) {
   // try list and find
   const all = await admin.auth.admin.listUsers()
   const found = all?.data?.users?.find((u) => u.email === email)
-  if (found) return found
+  if (found) return { user: found, wasCreated: false }
   // create
   const created = await admin.auth.admin.createUser({ email, email_confirm: true })
   if (created.error && created.error.status !== 422) {
     throw created.error
   }
-  if (created.data?.user) return created.data.user
+  if (created.data?.user) return { user: created.data.user, wasCreated: true }
   // re-list as fallback
   const relisted = await admin.auth.admin.listUsers()
-  return relisted?.data?.users?.find((u) => u.email === email)
+  const relistedUser = relisted?.data?.users?.find((u) => u.email === email)
+  return { user: relistedUser, wasCreated: !!relistedUser }
 }
 
 async function seed() {
   console.log('Seeding demo users...')
   const users = {}
   for (const u of demoUsers) {
-    const user = await getOrCreateUser(u.email)
+    const { user, wasCreated } = await getOrCreateUser(u.email)
     if (!user) throw new Error('Failed to get/create user: ' + u.email)
     users[u.username] = user
+    console.log(`${u.username} ${wasCreated ? 'created account' : 'account exists'}`)
   }
 
   console.log('Upserting profiles...')
@@ -68,19 +70,19 @@ async function seed() {
   if (profRes.error) throw profRes.error
 
   console.log('Creating follows...')
-  const follows = [
-    // alice follows bob and charlie
-    { follower_id: users.alice.id, following_id: users.bob.id },
-    { follower_id: users.alice.id, following_id: users.charlie.id },
-    // bob follows alice
-    { follower_id: users.bob.id, following_id: users.alice.id },
-    // charlie follows david and elaine
-    { follower_id: users.charlie.id, following_id: users.david.id },
-    { follower_id: users.charlie.id, following_id: users.elaine.id },
+  const followPairs = [
+    // [follower, following]
+    ['alice', 'bob'],
+    ['alice', 'charlie'],
+    ['bob', 'alice'],
+    ['charlie', 'david'],
+    ['charlie', 'elaine'],
   ]
-  for (const f of follows) {
+  for (const [follower, following] of followPairs) {
+    const f = { follower_id: users[follower].id, following_id: users[following].id }
     const r = await admin.from('follows').insert([f])
     if (r.error && r.error.code !== '23505') throw r.error
+    if (!r.error) console.log(`${follower} followed ${following}`)
   }
 
   console.log('Upserting sample papers...')
@@ -102,17 +104,18 @@ async function seed() {
   for (const username of Object.keys(users)) {
     const picks = pick(3)
     for (let i = 0; i < picks.length; i++) {
+      const paper = picks[i]
       const st = i === 0 ? 'to_read' : i === 1 ? 'reading' : 'read'
-      userPapers.push({
+      const up = {
         user_id: users[username].id,
-        openalex_id: picks[i].openalex_id,
+        openalex_id: paper.openalex_id,
         status: st,
-      })
+      }
+      const r = await admin.from('user_papers').insert([up])
+      if (r.error && r.error.code !== '23505') throw r.error
+      if (!r.error) console.log(`${username} added "${paper.title}" to library`)
+      userPapers.push(up)
     }
-  }
-  for (const up of userPapers) {
-    const r = await admin.from('user_papers').insert([up])
-    if (r.error && r.error.code !== '23505') throw r.error
   }
 
   console.log('Inserting posts for activity feed...')
