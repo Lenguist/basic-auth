@@ -6,7 +6,10 @@ https://papiers.ai/2506.16659
 I think cool feature slike this is key to get off the ground,
 but the social features are key to get users to come back and use the app.
 
-
+thoughts from chatgpt
+Researchers are skeptical of gimmicky apps.
+→ Keep tone clean, minimalist, intellectual. No hype.
+→ Position as “A beautiful tool for organizing and discovering research — together.”
 
 Nov 8
 

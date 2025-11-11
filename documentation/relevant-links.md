@@ -9,3 +9,6 @@ https://chatgpt.com/c/690d3c7a-3898-832a-a538-63dc19b8a3d0
 Possible competitor (although not too much to worry about)
 https://x.com/sighjith/status/1987722139672117507?s=20
 https://papiers.ai/2506.16659
+
+I think cool feature slike this is key to get off the ground,
+but the social features are key to get users to come back and use the app.
