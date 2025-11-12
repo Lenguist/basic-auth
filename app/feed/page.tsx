@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabaseBrowserClient'
+import { formatRelativeTime, formatDateTime } from '@/lib/formatTime'
+import LikeButton from '@/components/LikeButton'
 
 type Post = {
   id: string
@@ -20,6 +22,8 @@ export default function FeedPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [profiles, setProfiles] = useState<Record<string, { username: string | null; display_name: string | null }>>({})
   const [papers, setPapers] = useState<Record<string, any>>({})
+  const [likesCount, setLikesCount] = useState<Record<string, number>>({})
+  const [likedByMe, setLikedByMe] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -77,6 +81,22 @@ export default function FeedPage() {
           setPapers(map)
         }
       }
+      // fetch likes for these posts (counts and whether current user liked them)
+      if (ps.length > 0) {
+        const postIds = ps.map((p) => p.id)
+        const likesRes = await supabaseBrowser.from('post_likes').select('post_id,user_id').in('post_id', postIds)
+        if (!likesRes.error) {
+          const counts: Record<string, number> = {}
+          const likedMap: Record<string, boolean> = {}
+          for (const r of likesRes.data as any[]) {
+            counts[r.post_id] = (counts[r.post_id] ?? 0) + 1
+            if (r.user_id === data.session.user.id) likedMap[r.post_id] = true
+          }
+          setLikesCount(counts)
+          setLikedByMe(likedMap)
+        }
+      }
+
       setLoading(false)
     }
     init()
@@ -109,11 +129,19 @@ export default function FeedPage() {
             if (p.type === 'added_to_library') action = 'added to library'
             return (
               <li key={p.id} className="rounded-lg border border-gray-200 p-3 dark:border-zinc-800">
-                <div className="mb-1 text-sm text-gray-600 dark:text-gray-400">
-                  <a href={`/u/${prof?.username ?? ''}`} className="font-medium text-gray-900 hover:underline dark:text-white">
-                    {name}
-                  </a>{' '}
-                  {action}
+                <div className="mb-1 flex items-center justify-between">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    <a href={`/u/${prof?.username ?? ''}`} className="font-medium text-gray-900 hover:underline dark:text-white">
+                      {name}
+                    </a>{' '}
+                    {action}
+                  </div>
+                  <time
+                    className="text-xs text-gray-500 dark:text-gray-500"
+                    title={formatDateTime(p.created_at)}
+                  >
+                    {formatRelativeTime(p.created_at)}
+                  </time>
                 </div>
                 {paper && (
                   <>
@@ -128,6 +156,17 @@ export default function FeedPage() {
                     )}
                   </>
                 )}
+                <div className="mt-3">
+                  <LikeButton
+                    postId={p.id}
+                    initialLiked={!!likedByMe[p.id]}
+                    initialCount={likesCount[p.id] ?? 0}
+                    onToggle={(postId, liked) => {
+                      setLikedByMe((s) => ({ ...s, [postId]: liked }))
+                      setLikesCount((s) => ({ ...s, [postId]: (s[postId] ?? 0) + (liked ? 1 : -1) }))
+                    }}
+                  />
+                </div>
               </li>
             )
           })}
