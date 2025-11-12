@@ -73,6 +73,12 @@ export default function NavBar() {
                 Feed
               </Link>
               <Link
+                href="/activity"
+                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-orange-50 dark:text-white dark:hover:bg-orange-900/20"
+              >
+                Activity
+              </Link>
+              <Link
                 href="/dashboard"
                 className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-orange-50 dark:text-white dark:hover:bg-orange-900/20"
               >

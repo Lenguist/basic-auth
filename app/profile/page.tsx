@@ -57,6 +57,29 @@ export default function ProfilePage() {
     setSaving(false)
   }
 
+  async function handleDeleteMyData() {
+    if (!confirm('Delete your data (library, profile, posts, follows as follower) and sign out?')) return
+    setSaving(true)
+    try {
+      const uid = session!.user.id
+      // Delete my posts
+      await supabaseBrowser.from('posts').delete().eq('user_id', uid)
+      // Delete my library
+      await supabaseBrowser.from('user_papers').delete().eq('user_id', uid)
+      // Delete my follows where I am the follower
+      await supabaseBrowser.from('follows').delete().eq('follower_id', uid)
+      // Delete my profile
+      await supabaseBrowser.from('profiles').delete().eq('id', uid)
+      // Sign out
+      await supabaseBrowser.auth.signOut()
+      router.push('/auth')
+    } catch (e: any) {
+      setMessage(e?.message ?? 'Failed to delete data')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (!session || loading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
@@ -115,6 +138,19 @@ export default function ProfilePage() {
           </button>
           {message && <p className="text-sm text-gray-700 dark:text-gray-300">{message}</p>}
         </div>
+      </div>
+      <div className="mt-6 rounded-lg border border-red-300 p-4 dark:border-red-900/60">
+        <h2 className="mb-2 text-lg font-semibold text-red-700 dark:text-red-400">Danger zone</h2>
+        <p className="mb-3 text-sm text-gray-700 dark:text-gray-300">
+          Delete your data (library, profile, posts, follows as follower) and sign out. This does not remove your Auth account; admin deletion is required to fully erase it.
+        </p>
+        <button
+          onClick={handleDeleteMyData}
+          disabled={saving}
+          className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+        >
+          {saving ? 'Deleting…' : 'Delete my data'}
+        </button>
       </div>
     </div>
   )

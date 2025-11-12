@@ -56,10 +56,6 @@ export default function LibraryPage() {
       setItems((prev) =>
         prev.map((it) => (it.openalex_id === openalex_id ? { ...it, status } : it))
       )
-      // feed post
-      await supabaseBrowser.from('posts').insert([
-        { user_id: session!.user.id, type: 'status_changed', openalex_id, status },
-      ])
     }
     setUpdating(null)
   }

@@ -11,7 +11,7 @@ export type NormalizedPaper = {
   source?: string | null
 }
 
-export async function addPaperToLibrary(paper: NormalizedPaper) {
+export async function addPaperToLibrary(paper: NormalizedPaper, status: 'to_read' | 'reading' | 'read' = 'to_read') {
   const { data: sessionData } = await supabaseBrowser.auth.getSession()
   const session = sessionData.session
   if (!session) throw new Error('Not authenticated')
@@ -37,21 +37,13 @@ export async function addPaperToLibrary(paper: NormalizedPaper) {
     {
       user_id: session.user.id,
       openalex_id: paper.openalex_id,
+      status,
     },
   ])
 
   if (linkRes.error && (linkRes.error as any).code !== '23505') {
     throw linkRes.error
   }
-
-  // Write a feed post for activity
-  await supabaseBrowser.from('posts').insert([
-    {
-      user_id: session.user.id,
-      type: 'added_to_library',
-      openalex_id: paper.openalex_id,
-    },
-  ])
 
   return { ok: true }
 }

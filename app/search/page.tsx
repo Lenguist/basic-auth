@@ -23,6 +23,7 @@ export default function SearchPage() {
   const [adding, setAdding] = useState<string | null>(null)
   const [addedIds, setAddedIds] = useState<Record<string, boolean>>({})
   const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<'to_read' | 'reading' | 'read'>('to_read')
 
   useEffect(() => {
     const init = async () => {
@@ -76,7 +77,7 @@ export default function SearchPage() {
     try {
       setAdding(work.id)
       const paper = normalize(work)
-      await addPaperToLibrary(paper)
+      await addPaperToLibrary(paper, status)
       setAddedIds((prev) => ({ ...prev, [paper.openalex_id]: true }))
     } catch (e: any) {
       alert(e?.message ?? 'Failed to add')
@@ -129,12 +130,23 @@ export default function SearchPage() {
                     Open
                   </a>
                 )}
+                <div className="relative">
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as any)}
+                    className="rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-700 dark:bg-zinc-800 dark:text-white"
+                  >
+                    <option value="to_read">Want to Read</option>
+                    <option value="reading">Currently Reading</option>
+                    <option value="read">Read</option>
+                  </select>
+                </div>
                 <button
                   onClick={() => handleAdd(w)}
                   disabled={!!added || adding === w.id}
                   className="btn-primary px-3 py-1.5 text-sm"
                 >
-                  {added ? 'Added' : adding === w.id ? 'Adding…' : 'Add to Library'}
+                  {added ? 'Added' : adding === w.id ? 'Adding…' : 'Add'}
                 </button>
               </div>
             </li>
