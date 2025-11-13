@@ -1,22 +1,24 @@
-'use client'
+ 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Session } from '@supabase/supabase-js'
 import { supabaseBrowser } from '@/lib/supabaseBrowserClient'
-import { ensureProfileForCurrentUser, fetchMyProfile, saveMyProfile } from '@/lib/profile'
+import { fetchMyProfile } from '@/lib/profile'
+import { getFollowCounts } from '@/lib/social'
+import dynamic from 'next/dynamic'
+import LibrarySnapshot from '@/components/LibrarySnapshot'
+
+const ReadingByQuarter = dynamic(() => import('@/components/ReadingByQuarter'), { ssr: false })
 
 export default function ProfilePage() {
   const router = useRouter()
   const [session, setSession] = useState<Session | null>(null)
+  const [profile, setProfile] = useState<any | null>(null)
+  const [counts, setCounts] = useState<{ followers: number; following: number } | null>(null)
+  const [libraryCount, setLibraryCount] = useState<number | null>(null)
+  const [postsCount, setPostsCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-
-  const [username, setUsername] = useState('')
-  const [displayName, setDisplayName] = useState('')
-  const [bio, setBio] = useState('')
-  // Avatar postponed until we add uploads
 
   useEffect(() => {
     const init = async () => {
@@ -26,59 +28,20 @@ export default function ProfilePage() {
         return
       }
       setSession(data.session)
-      await ensureProfileForCurrentUser()
       const p = await fetchMyProfile()
+      setProfile(p)
       if (p) {
-        setUsername(p.username ?? '')
-        setDisplayName(p.display_name ?? '')
-        setBio(p.bio ?? '')
+        const c = await getFollowCounts(p.id)
+        setCounts(c)
+        const libRes = await supabaseBrowser.from('user_papers').select('*', { count: 'exact', head: true }).eq('user_id', p.id)
+        setLibraryCount(libRes.count ?? 0)
+        const postRes = await supabaseBrowser.from('posts').select('*', { count: 'exact', head: true }).eq('user_id', p.id)
+        setPostsCount(postRes.count ?? 0)
       }
       setLoading(false)
     }
     init()
   }, [router])
-
-  const usernameValid = useMemo(() => {
-    if (!username) return true
-    return /^[a-z0-9_.]{3,20}$/.test(username)
-  }, [username])
-
-  async function handleSave() {
-    setSaving(true)
-    setMessage(null)
-    const res = await saveMyProfile({
-      username: username || null,
-      display_name: displayName || null,
-      bio: bio || null,
-      avatar_url: null,
-    })
-    if (!res.ok) setMessage(res.message)
-    else setMessage('Saved!')
-    setSaving(false)
-  }
-
-  async function handleDeleteMyData() {
-    if (!confirm('Delete your data (library, profile, posts, follows as follower) and sign out?')) return
-    setSaving(true)
-    try {
-      const uid = session!.user.id
-      // Delete my posts
-      await supabaseBrowser.from('posts').delete().eq('user_id', uid)
-      // Delete my library
-      await supabaseBrowser.from('user_papers').delete().eq('user_id', uid)
-      // Delete my follows where I am the follower
-      await supabaseBrowser.from('follows').delete().eq('follower_id', uid)
-      // Delete my profile
-      await supabaseBrowser.from('profiles').delete().eq('id', uid)
-      // Sign out
-      await supabaseBrowser.auth.signOut()
-      router.push('/auth')
-    } catch (e: any) {
-      setMessage(e?.message ?? 'Failed to delete data')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   if (!session || loading) {
     return (
@@ -89,68 +52,45 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-6">
-      <h1 className="mb-4 text-2xl font-bold text-gray-900 dark:text-white">Your Profile</h1>
-      <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-zinc-800">
+    <div className="mx-auto w-full max-w-3xl px-4 py-6">
+      <div className="mb-6 flex items-start justify-between">
         <div>
-          <label className="mb-1 block text-sm text-gray-700 dark:text-gray-300">Username</label>
-          <input
-            value={username}
-            onChange={(e) => setUsername(e.target.value.toLowerCase())}
-            placeholder="e.g. maksym_b"
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:outline-none dark:border-gray-700 dark:bg-zinc-800 dark:text-white"
-          />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            3–20 chars, lowercase letters, numbers, underscore, dot
-          </p>
-          {!usernameValid && (
-            <p className="mt-1 text-sm text-red-600">Invalid username format.</p>
-          )}
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{profile?.display_name || profile?.username}</h1>
+          {profile?.username && <p className="text-sm text-gray-600 dark:text-gray-300">@{profile.username}</p>}
+          {profile?.bio && <p className="mt-2 text-gray-700 dark:text-gray-300">{profile.bio}</p>}
+          <div className="mt-3 flex items-center gap-2">
+            <span className="chip">{libraryCount ?? 0} library</span>
+            <span className="chip">{postsCount ?? 0} posts</span>
+            {counts && (
+              <>
+                <span className="chip">{counts.followers} followers</span>
+                <span className="chip">{counts.following} following</span>
+              </>
+            )}
+          </div>
         </div>
-
-        <div>
-          <label className="mb-1 block text-sm text-gray-700 dark:text-gray-300">Display name</label>
-          <input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Your name"
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:outline-none dark:border-gray-700 dark:bg-zinc-800 dark:text-white"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm text-gray-700 dark:text-gray-300">Bio</label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="A short bio"
-            className="min-h-24 w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 focus:border-orange-600 focus:outline-none dark:border-gray-700 dark:bg-zinc-800 dark:text-white"
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSave}
-            disabled={saving || !usernameValid}
-            className="btn-primary px-5 py-2"
-          >
-            {saving ? 'Saving…' : 'Save'}
-          </button>
-          {message && <p className="text-sm text-gray-700 dark:text-gray-300">{message}</p>}
+        <div className="flex items-center gap-2">
+          <a href={`/u/${profile?.username ?? ''}`} className="rounded px-3 py-1.5 text-sm text-gray-800 hover:bg-orange-50 dark:text-white dark:hover:bg-orange-900/20">Public Profile</a>
+          <a href="/profile/settings" className="btn-secondary px-3 py-1.5 text-sm">Settings</a>
         </div>
       </div>
-      <div className="mt-6 rounded-lg border border-red-300 p-4 dark:border-red-900/60">
-        <h2 className="mb-2 text-lg font-semibold text-red-700 dark:text-red-400">Danger zone</h2>
-        <p className="mb-3 text-sm text-gray-700 dark:text-gray-300">
-          Delete your data (library, profile, posts, follows as follower) and sign out. This does not remove your Auth account; admin deletion is required to fully erase it.
-        </p>
-        <button
-          onClick={handleDeleteMyData}
-          disabled={saving}
-          className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
-        >
-          {saving ? 'Deleting…' : 'Delete my data'}
-        </button>
+      {/* You can add recent activity, charts, or other Strava-like widgets below */}
+      <div className="rounded-lg border border-gray-200 p-4 dark:border-zinc-800">
+        {(libraryCount ?? 0) === 0 && (postsCount ?? 0) === 0 && (
+          <p className="text-gray-700 dark:text-gray-300">This is your profile overview. Add charts, reading streaks, or highlights here to make it Strava-like.</p>
+        )}
+        {/* Reading by quarter chart */}
+        {profile?.id && (
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore -- profile.id should exist when logged in
+          <div className="mt-4">
+            {/* lazy load component client-side */}
+            <ReadingByQuarter userId={profile.id} />
+            {/* library snapshot (recent additions) */}
+            {/* @ts-ignore -- profile.id exists when logged in */}
+            <LibrarySnapshot userId={profile.id} />
+          </div>
+        )}
       </div>
     </div>
   )
