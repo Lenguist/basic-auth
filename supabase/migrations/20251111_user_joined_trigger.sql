@@ -17,16 +17,23 @@ $$;
 
 do $$
 begin
-  if not exists (
-    select 1 from pg_trigger
-    where tgname = 'trg_profile_after_insert_user_joined'
+  if exists (
+    select 1 from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'profiles'
   ) then
-    create trigger trg_profile_after_insert_user_joined
-      after insert on public.profiles
-      for each row
-      execute procedure public.fn_profile_after_insert_user_joined();
+    if not exists (
+      select 1 from pg_trigger
+      where tgname = 'trg_profile_after_insert_user_joined'
+    ) then
+      create trigger trg_profile_after_insert_user_joined
+        after insert on public.profiles
+        for each row
+        execute procedure public.fn_profile_after_insert_user_joined();
+    end if;
   end if;
 end
 $$;
+
 
 

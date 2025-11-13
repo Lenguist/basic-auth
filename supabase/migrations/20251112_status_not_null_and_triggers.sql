@@ -16,13 +16,23 @@ end $$;
 -- 2) Extend posts with optional target_user_id (for follow events)
 do $$
 begin
-  if not exists (
-    select 1 from information_schema.columns
-    where table_schema = 'public' and table_name = 'posts' and column_name = 'target_user_id'
+  if exists (
+    select 1 from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'posts'
   ) then
-    alter table public.posts add column target_user_id uuid references auth.users(id) on delete cascade;
+    if not exists (
+      select 1 from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'posts'
+        and column_name = 'target_user_id'
+    ) then
+      alter table public.posts
+        add column target_user_id uuid references auth.users(id) on delete cascade;
+    end if;
   end if;
 end $$;
+
 
 -- 3) Trigger: AFTER INSERT on user_papers -> posts(added_to_shelf)
 create or replace function public.fn_user_papers_after_insert_added()

@@ -147,5 +147,3 @@ begin
 end $$;
 
 alter table public.user_papers alter column status set default 'to_read';
-
-

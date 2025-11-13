@@ -54,12 +54,7 @@ export default function NavBar() {
               >
                 Profile
               </Link>
-              <Link
-                href="/search"
-                className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-orange-50 dark:text-white dark:hover:bg-orange-900/20"
-              >
-                Search
-              </Link>
+              
               <Link
                 href="/library"
                 className="rounded-lg px-3 py-1.5 text-sm text-gray-800 hover:bg-orange-50 dark:text-white dark:hover:bg-orange-900/20"
