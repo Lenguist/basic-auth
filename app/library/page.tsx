@@ -27,6 +27,8 @@ export default function LibraryPage() {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'to_read' | 'reading' | 'read'>('all')
+  const [deletingIds, setDeletingIds] = useState<string[]>([])
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   // search state (copied from search page)
   const [q, setQ] = useState('')
   const [searchLoading, setSearchLoading] = useState(false)
@@ -35,6 +37,7 @@ export default function LibraryPage() {
   const [addedIds, setAddedIds] = useState<Record<string, boolean>>({})
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<'to_read' | 'reading' | 'read'>('to_read')
+  const [expandedAuthors, setExpandedAuthors] = useState<Set<string>>(new Set())
 
   const canSearch = useMemo(() => q.trim().length > 1, [q])
 
@@ -120,8 +123,30 @@ export default function LibraryPage() {
       setItems((prev) =>
         prev.map((it) => (it.openalex_id === openalex_id ? { ...it, status } : it))
       )
+    } else {
+      console.error('Status update error:', res.error)
     }
     setUpdating(null)
+  }
+
+  async function deleteFromLibrary(openalex_id: string) {
+    setConfirmDelete(openalex_id)
+  }
+
+  async function handleConfirmDelete(openalex_id: string) {
+    setConfirmDelete(null)
+    setDeletingIds((prev) => [...prev, openalex_id])
+    const res = await supabaseBrowser
+      .from('user_papers')
+      .delete()
+      .match({ openalex_id, user_id: session!.user.id })
+    if (!res.error) {
+      setItems((prev) => prev.filter((it) => it.openalex_id !== openalex_id))
+    } else {
+      alert('Failed to delete paper. See console for details.')
+      console.error('Delete error:', res.error)
+    }
+    setDeletingIds((prev) => prev.filter((id) => id !== openalex_id))
   }
 
   if (!session || loading) {
@@ -224,55 +249,133 @@ export default function LibraryPage() {
             const p = it.papers
             const authors = (p?.authors_json ?? []) as string[]
             return (
-              <li key={it.openalex_id} className="rounded-lg border border-gray-200 p-3 dark:border-zinc-800">
-                <div className="font-medium text-gray-900 dark:text-white">{p?.title ?? it.openalex_id}</div>
+              <li key={it.openalex_id} className="rounded-lg border border-gray-200 p-5 dark:border-zinc-800 relative">
+              <div className="absolute top-5 right-5">
+                <button
+                  onClick={() => deleteFromLibrary(it.openalex_id)}
+                  disabled={deletingIds.includes(it.openalex_id) || updating === it.openalex_id}
+                  className="text-gray-400 hover:text-red-600 disabled:opacity-50"
+                  aria-label="Delete paper"
+                  title="Delete from library"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 0 0-.894.553L7.382 4H4a1 1 0 0 0 0 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6a1 1 0 0 0 0-2h-3.382l-.724-1.447A1 1 0 0 0 11 2H9zM7 8a1 1 0 0 1 2 0v6a1 1 0 0 1-2 0V8zm5-1a1 1 0 0 0-1 1v6a1 1 0 0 0 2 0V8a1 1 0 0 0-1-1z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+              <div className="pr-10">
+                <div>
+                  {p?.url && (
+                    <a
+                      href={p.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="float-left text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 mr-2"
+                      title="Open paper"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  )}
+                  <div className="font-medium text-gray-900 dark:text-white">{p?.title ?? it.openalex_id}</div>
+                </div>
                 <div className="text-sm text-gray-600 dark:text-gray-300">
-                  {authors.join(', ')} {p?.year ? `· ${p.year}` : ''}
+                  {expandedAuthors.has(it.openalex_id) ? (
+                    <div>
+                      {authors.join(', ')}
+                      {authors.length > 12 && (
+                        <button
+                          onClick={() => setExpandedAuthors(prev => {
+                            const next = new Set(prev)
+                            next.delete(it.openalex_id)
+                            return next
+                          })}
+                          className="ml-2 text-xs text-orange-600 dark:text-orange-400 hover:underline"
+                        >
+                          collapse
+                        </button>
+                      )}
+                    </div>
+                  ) : authors.length > 12 ? (
+                    <div>
+                      {authors.slice(0, 12).join(', ')}...
+                      <button
+                        onClick={() => setExpandedAuthors(prev => new Set(prev).add(it.openalex_id))}
+                        className="ml-2 text-xs text-orange-600 dark:text-orange-400 hover:underline"
+                      >
+                        expand
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      {authors.join(', ')}
+                    </div>
+                  )}
                 </div>
-                {p?.url && (
-                  <a
-                    href={p.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-1 inline-block text-sm underline underline-offset-4"
-                  >
-                    Open
-                  </a>
-                )}
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="chip">Status: {it.status ?? 'to_read'}</span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => updateStatus(it.openalex_id, 'to_read')}
-                      disabled={updating === it.openalex_id}
-                      className="btn-secondary px-2 py-1 text-xs"
-                    >
-                      To Read
-                    </button>
-                    <button
-                      onClick={() => updateStatus(it.openalex_id, 'reading')}
-                      disabled={updating === it.openalex_id}
-                      className="btn-secondary px-2 py-1 text-xs"
-                    >
-                      Reading
-                    </button>
-                    <button
-                      onClick={() => updateStatus(it.openalex_id, 'read')}
-                      disabled={updating === it.openalex_id}
-                      className="btn-secondary px-2 py-1 text-xs"
-                    >
-                      Read
-                    </button>
+                {p?.year && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Date published: {p.year}
                   </div>
+                )}
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Date added to the library: {new Date(it.inserted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).replace(/ (\d{4})/, ', $1')}
                 </div>
-              </li>
+
+                <div className="mt-2">
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    it.status === 'read' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                    : it.status === 'reading' ? 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-200'
+                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                  }`}>
+                    {it.status === 'to_read' ? 'To read' : it.status === 'reading' ? 'Reading' : 'Read'}
+                  </span>
+                </div>
+                <div className="absolute bottom-5 right-5 flex items-center gap-1">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Move to</span>
+                  <select
+                    value={it.status ?? 'to_read'}
+                    onChange={(e) => updateStatus(it.openalex_id, e.target.value as any)}
+                    disabled={updating === it.openalex_id || deletingIds.includes(it.openalex_id)}
+                    className="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-700 dark:bg-zinc-800 dark:text-white"
+                  >
+                    <option value="to_read">To read</option>
+                    <option value="reading">Reading</option>
+                    <option value="read">Read</option>
+                  </select>
+                </div>
+
+              </div>
+            </li>
             )
           })
           }
         </ul>
       )}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/20 dark:bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Remove paper?</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              This paper will be removed from your library. You can add it back anytime.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="px-4 py-2 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleConfirmDelete(confirmDelete)}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
-
