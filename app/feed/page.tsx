@@ -25,6 +25,7 @@ export default function FeedPage() {
   const [likesCount, setLikesCount] = useState<Record<string, number>>({})
   const [likedByMe, setLikedByMe] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
+  const [expandedAuthors, setExpandedAuthors] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const init = async () => {
@@ -124,17 +125,28 @@ export default function FeedPage() {
             const label =
               p.status === 'to_read' ? 'Want to Read' : p.status === 'reading' ? 'Currently Reading' : p.status === 'read' ? 'Read' : null
             let action = ''
-            if (p.type === 'added_to_shelf') action = `added to ${label ?? 'shelf'}`
-            if (p.type === 'status_changed') action = `marked as ${label ?? p.status}`
+            if (p.type === 'added_to_shelf') action = `added to library`
+            if (p.type === 'status_changed') action = `marked as`
             if (p.type === 'added_to_library') action = 'added to library'
             return (
               <li key={p.id} className="rounded-lg border border-gray-200 p-3 dark:border-zinc-800">
-                <div className="mb-1 flex items-center justify-between">
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    <a href={`/u/${prof?.username ?? ''}`} className="font-medium text-gray-900 hover:underline dark:text-white">
-                      {name}
-                    </a>{' '}
-                    {action}
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <a href={`/u/${prof?.username ?? ''}`} className="font-medium text-gray-900 hover:underline dark:text-white">
+                        {name}
+                      </a>{' '}
+                      {action}
+                    </div>
+                    {p.status && (
+                      <div className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                        p.status === 'read' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+                        : p.status === 'reading' ? 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-200'
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                      }`}>
+                        {p.status === 'to_read' ? 'To read' : p.status === 'reading' ? 'Reading' : 'Read'}
+                      </div>
+                    )}
                   </div>
                   <time
                     className="text-xs text-gray-500 dark:text-gray-500"
@@ -145,14 +157,59 @@ export default function FeedPage() {
                 </div>
                 {paper && (
                   <>
-                    <div className="font-medium text-gray-900 dark:text-white">{paper.title}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                      {(paper.authors_json ?? []).join(', ')} {paper.year ? `· ${paper.year}` : ''}
+                    <div>
+                      {paper.url && (
+                        <a
+                          href={paper.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="float-left text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 mr-2"
+                          title="Open paper"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      )}
+                      <div className="font-medium text-gray-900 dark:text-white">{paper.title}</div>
                     </div>
-                    {paper.url && (
-                      <a href={paper.url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm underline">
-                        Open
-                      </a>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">
+                      {expandedAuthors.has(p.id) ? (
+                        <div>
+                          {(paper.authors_json ?? []).join(', ')}
+                          {(paper.authors_json ?? []).length > 12 && (
+                            <button
+                              onClick={() => setExpandedAuthors(prev => {
+                                const next = new Set(prev)
+                                next.delete(p.id)
+                                return next
+                              })}
+                              className="ml-2 text-xs text-orange-600 dark:text-orange-400 hover:underline"
+                            >
+                              collapse
+                            </button>
+                          )}
+                        </div>
+                      ) : (paper.authors_json ?? []).length > 12 ? (
+                        <div>
+                          {(paper.authors_json ?? []).slice(0, 12).join(', ')}...
+                          <button
+                            onClick={() => setExpandedAuthors(prev => new Set(prev).add(p.id))}
+                            className="ml-2 text-xs text-orange-600 dark:text-orange-400 hover:underline"
+                          >
+                            expand
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          {(paper.authors_json ?? []).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                    {paper.year && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Date published: {paper.year}
+                      </div>
                     )}
                   </>
                 )}

@@ -59,12 +59,20 @@ begin
 end $$;
 
 -- 4) Trigger: AFTER UPDATE OF status on user_papers -> posts(status_changed)
+-- Deletes old status_changed posts for this paper and creates a new one
 create or replace function public.fn_user_papers_after_update_status()
 returns trigger
 language plpgsql
 as $$
 begin
   if (old.status is distinct from new.status) then
+    -- Delete previous status_changed posts for this user and paper
+    delete from public.posts
+    where user_id = new.user_id
+      and type = 'status_changed'
+      and openalex_id = new.openalex_id;
+    
+    -- Create the new status_changed post
     insert into public.posts (user_id, type, openalex_id, status)
     values (new.user_id, 'status_changed', new.openalex_id, new.status);
   end if;
